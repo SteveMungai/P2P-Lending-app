@@ -1,0 +1,219 @@
+.marketplace-body {
+  display: flex;
+  background: #f1f5f9;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 270px;
+  background: #0f5f63;
+  color: white;
+  padding: 25px;
+}
+
+.investor-summary {
+  background: #e2e8f0;
+  color: black;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+}
+
+.amount {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.filters h2 {
+  margin-bottom: 10px;
+}
+
+.filters h4 {
+  margin-top: 20px;
+}
+
+.filters label {
+  display: block;
+  margin-top: 10px;
+}
+
+.apply-btn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 20px;
+  border: none;
+  background: #e2e8f0;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.content {
+  flex: 1;
+  padding: 30px;
+}
+
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.clear-btn {
+  background: #0f5f63;
+  color: white;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.loan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+.loan-card {
+  background: #e2e8f0;
+  padding: 20px;
+  border-radius: 15px;
+  transition: 0.3s ease;
+}
+
+.loan-card:hover {
+  transform: translateY(-5px);
+}
+
+.loan-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.loan-avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  margin-right: 10px;
+  object-fit: cover;
+}
+
+.invest-btn {
+  margin-top: 15px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 25px;
+  border: none;
+  background: #0f8b8d;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.invest-btn:hover {
+  background: #0c6f70;
+}
+
+
+.loan-details-container {
+  background-color: #0f5c63;
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+.card {
+  background: #f5f7f8;
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 25px;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+.card h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #0f5c63;
+  text-transform: uppercase;
+  font-size: 18px;
+  letter-spacing: 1px;
+}
+
+.loan-grid {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.label {
+  font-size: 12px;
+  color: gray;
+  margin-bottom: 5px;
+}
+
+.progress-section {
+  margin-top: 20px;
+}
+
+.progress-bar {
+  background: #ddd;
+  height: 8px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  background: #0f5c63;
+  height: 100%;
+  transition: width 0.5s ease;
+}
+
+.progress-text {
+  font-size: 14px;
+  margin-top: 10px;
+  text-align: right;
+}
+
+.invest-grid {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.invest-grid label {
+  font-size: 13px;
+  margin-top: 10px;
+  display: block;
+}
+
+.invest-grid input,
+.invest-grid select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-top: 5px;
+}
+
+.primary-btn {
+  display: block;
+  margin: 0 auto;
+  background: #0f5c63;
+  color: white;
+  padding: 10px 35px;
+  border-radius: 25px;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.primary-btn:hover {
+  background: #0b4448;
+}

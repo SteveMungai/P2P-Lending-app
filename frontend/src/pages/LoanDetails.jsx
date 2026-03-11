@@ -6,7 +6,7 @@ import Footer from "../components/Footer";
 const LoanDetails = () => {
   const { id } = useParams();
 
-  // Dummy data for now (later replace with API call)
+  // Dummy data to be replaced with API call
   const loan = {
     id: id,
     principal: 100000,

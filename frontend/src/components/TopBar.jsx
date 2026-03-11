@@ -11,13 +11,13 @@ export default function TopBar() {
 
   const handleAuthClick = () => {
     if (!isLoggedIn) {
-      navigate("/login"); // Go to login page
+      navigate("/login"); 
     } else {
       setIsLoggedIn(false);
       alert("Signed out successfully");
     }
 
-    setShowDropdown(false); // close dropdown after click
+    setShowDropdown(false); 
   };
 
   return (

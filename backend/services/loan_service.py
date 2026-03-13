@@ -1,4 +1,4 @@
-from app.models.loan import Loan
+from backend.models.loan import Loan
 from app.extensions import db
 
 def create_loan(data):

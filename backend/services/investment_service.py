@@ -1,5 +1,5 @@
-from app.models.investment import Investment
-from app.models.loan import Loan
+from backend.models.investments import Investment
+from backend.models.loan import Loan
 from app.extensions import db
 from sqlalchemy import func
 

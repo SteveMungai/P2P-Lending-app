@@ -1,28 +1,49 @@
-export default function Sidebar({ clearFilters }) {
+import { useState, useEffect } from "react";
+
+const API = "http://127.0.0.1:5000";
+
+export default function Sidebar({ onApplyFilters }) {
+  const [minAmount, setMinAmount] = useState(1000);
+  const [maxAmount, setMaxAmount] = useState(50000);
+  const [risk, setRisk] = useState("");
+  const [portfolio, setPortfolio] = useState(0);
+  const [funds, setFunds] = useState(0);
+
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (!token) return;
+
+    fetch(`${API}/api/investor/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(res => res.json())
+      .then(data => {
+        setPortfolio(data.portfolio_value || 0);
+        setFunds(data.available_funds || 0);
+      })
+      .catch(err => console.error(err));
+  }, [token]);
+
+  const handleApply = () => {
+    onApplyFilters({ minAmount, maxAmount, risk });
+  };
+
   return (
     <div className="sidebar">
       <div className="investor-summary">
         <h4>INVESTOR SUMMARY</h4>
+
         <p>Portfolio Value</p>
-        <span className="amount">$50000</span>
+        <span>KES {portfolio.toLocaleString()}</span>
 
         <p>Available Funds</p>
-        <span className="amount">$31000</span>
+        <span>KES {funds.toLocaleString()}</span>
       </div>
 
-      <div className="filters">
-        <h2>FILTERS</h2>
-
-        <h4>AMOUNT</h4>
-        <p>Min: $50000 &nbsp;&nbsp; Max: $50000</p>
-
-        <h4>RISK LEVEL</h4>
-        <label><input type="radio" name="risk" /> HIGH</label>
-        <label><input type="radio" name="risk" /> MEDIUM</label>
-        <label><input type="radio" name="risk" /> LOW</label>
-
-        <button className="apply-btn">APPLY FILTERS</button>
-      </div>
+      <button onClick={handleApply}>APPLY FILTERS</button>
     </div>
   );
 }

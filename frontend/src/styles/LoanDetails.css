@@ -1,0 +1,49 @@
+.loan-details-page {
+  background: #0d5c63;
+  min-height: 100vh;
+  padding: 20px;
+  color: #000;
+}
+
+.loan-info-card,
+.borrower-card,
+.invest-card {
+  background: #f4f4f4;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.loan-top {
+  display: flex;
+  justify-content: space-between;
+}
+
+.progress-bar {
+  height: 8px;
+  background: #ddd;
+  border-radius: 5px;
+  margin: 10px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: teal;
+  border-radius: 5px;
+}
+
+.invest-card input {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px;
+}
+
+.invest-btn {
+  background: teal;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 20px;
+  width: 100%;
+}

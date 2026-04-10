@@ -1,26 +1,52 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "../styles/marketplace.css";
 import Sidebar from "../components/Sidebar";
-import LoanCard from "../components/Loancard";
+import LoanCard from "../components/Loancard";  
 import TopBar from "../components/TopBar";
 import Footer from "../components/Footer";
 
-const initialLoans = Array.from({ length: 9 }, (_, index) => ({
-  id: index + 1,
-  name: `Borrower ${index + 1}`,
-  purpose: "Business",
-  term: "12 months",
-  remaining: "KES 3,500",
-  risk: ["High", "Medium", "Low"][index % 3],
-  rate: "12%",
-  image: `https://i.pravatar.cc/150?img=${index + 10}`
-}));
-
 export default function Marketplace() {
-  const [loans, setLoans] = useState(initialLoans);
+  const [loans, setLoans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const token = localStorage.getItem("token");
+
+  const fetchLoans = () => {
+    setLoading(true);
+    setError(null);
+
+    fetch("http://127.0.0.1:5000/api/loans/", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch loans");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        //  ensure it's always an array
+        setLoans(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        console.error("Error fetching loans:", err);
+        setError("Unable to load loans");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchLoans();
+  }, []);
 
   const clearFilters = () => {
-    setLoans(initialLoans);
+    fetchLoans();
   };
 
   return (
@@ -39,9 +65,23 @@ export default function Marketplace() {
           </div>
 
           <div className="loan-grid">
-            {loans.map((loan) => (
-              <LoanCard key={loan.id} loan={loan} />
-            ))}
+            {/* Loading state */}
+            {loading && <p>Loading loans...</p>}
+
+            {/*  Error state */}
+            {error && <p className="error">{error}</p>}
+
+            {/* Empty state */}
+            {!loading && !error && loans.length === 0 && (
+              <p>No loans found</p>
+            )}
+
+            {/* Normal render */}
+            {!loading &&
+              !error &&
+              loans.map((loan) => (
+                <LoanCard key={loan.id} loan={loan} />
+              ))}
           </div>
         </div>
       </div>

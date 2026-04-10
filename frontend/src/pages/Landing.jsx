@@ -1,15 +1,47 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; 
 import Navbar from "../components/Navbar";
 import "../styles/landing.css";
 
 
 export default function Landing() {
+  const navigate = useNavigate();
+  const [loans, setLoans] = useState([]);
+  const API = "http://127.0.0.1:5000"; 
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      // Get User Data
+      fetch(`${API}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Unauthorized");
+          return res.json();
+        })
+        .then((user) => {
+          // Get User Loans using User ID
+          return fetch(`${API}/loans/user/${user.id}`);
+        })
+        .then((res) => res.json())
+        .then((data) => {
+          setLoans(data);
+          console.log("Loans loaded:", data);
+        })
+        .catch((err) => {
+          console.error("Session expired or fetch failed", err);
+          
+        });
+    }
+  }, []); 
+
   return (
     <>
       <Navbar />
 
-      
       <main className="landing-container">
-
         {/* HERO SECTION */}
         <section className="hero">
           <div className="hero-content">
@@ -20,8 +52,15 @@ export default function Landing() {
             </p>
 
             <div className="hero-buttons">
-              <button className="btn-primary">Get Started</button>
-              <button className="btn-outline">Learn More</button>
+              <button className="btn-primary" onClick={() => navigate("/auth")}>
+                Get Started
+              </button>
+              <button 
+                className="btn-outline" 
+                onClick={() => document.getElementById("about")?.scrollIntoView({ behavior: "smooth" })}
+              >
+                Learn More
+              </button> 
             </div>
           </div>
         </section>
@@ -29,23 +68,19 @@ export default function Landing() {
         {/* WHY CHOOSE US */}
         <section className="features">
           <h2>Why Choose LendConnect?</h2>
-
           <div className="feature-cards">
             <div className="card">
               <h3>Secure Platform</h3>
               <p>Bank-level security and encryption to protect your data.</p>
             </div>
-
             <div className="card">
               <h3>Higher Returns</h3>
               <p>Earn competitive returns compared to traditional savings.</p>
             </div>
-
             <div className="card">
               <h3>Fast & Flexible</h3>
               <p>Quick access to loans without lengthy bank processes.</p>
             </div>
-
             <div className="card">
               <h3>Diverse Loans</h3>
               <p>Choose from personal, business, and education loans.</p>
@@ -53,10 +88,11 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* HOW IT WORKS */}
-        <section className="how-it-works">
-          <h2>How Peer-to-Peer Lending Works</h2>
+      
 
+        {/* HOW IT WORKS */}
+        <section id="about" className="how-it-works">
+          <h2>How Peer-to-Peer Lending Works</h2>
           <div className="steps">
             <div className="step">
               <span>1</span>
@@ -76,7 +112,9 @@ export default function Landing() {
         {/* CTA */}
         <section className="cta">
           <h2>Ready to start borrowing or investing?</h2>
-          <button className="btn-primary">Create an Account</button>
+          <button className="btn-primary" onClick={() => navigate("/auth")}>
+            Create an Account
+          </button>
         </section>
 
         {/* FOOTER */}

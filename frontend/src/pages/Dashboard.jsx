@@ -17,13 +17,13 @@ export default function Dashboard() {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    // We define the headers here to reuse them
+    
     const headers = {
       "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json"
     };
 
-    // Use Promise.all to fetch everything simultaneously using your existing URLs
+
     Promise.all([
       fetch(`${API}/loans`, { headers }).then(res => res.json()),
       fetch(`${API}/repayments`, { headers }).then(res => res.json()),
@@ -41,6 +41,22 @@ export default function Dashboard() {
   // Simple derived values
   const totalBorrowed = loans.reduce((sum, loan) => sum + (loan.amount || 0), 0);
   const totalPaid = repayments.reduce((sum, r) => sum + (r.amount || 0), 0);
+  const totalLent = loans
+  .filter(l => l.investments_id === users.id)
+  .reduce((sum, l) => sum + (l.amount || 0), 0);
+
+  const totalLoans = loans.length;
+const completedLoans = loans.filter(l => l.status === "closed").length;
+
+const repaymentRatio = totalLoans > 0
+  ? completedLoans / totalLoans
+  : 0;
+
+let rating = "C";
+
+if (repaymentRatio > 0.8) rating = "A+";
+else if (repaymentRatio > 0.6) rating = "A";
+else if (repaymentRatio > 0.4) rating = "B";
 
   if (loading) {
     return <div className="loading-screen">Loading your financial overview...</div>;
@@ -57,10 +73,9 @@ export default function Dashboard() {
           <div className="card">
             <h3>User Info</h3>
             <div className="stats-grid">
-              <StatCard title="Rating" value="A+" />
-              <StatCard title="Total Amount Lent" value="$0" />
+              <StatCard title="Credit History Rating" value={rating} />
+              <StatCard title="Total Amount Lent" value={`$${totalLent.toLocaleString()}`} />
               <StatCard title="Next Payment Due" value="--" />
-              {/* Added .toLocaleString() for cleaner number formatting */}
               <StatCard title="Total Amount Borrowed" value={`$${totalBorrowed.toLocaleString()}`} />
               <StatCard title="Total Amount Paid" value={`$${totalPaid.toLocaleString()}`} />
             </div>

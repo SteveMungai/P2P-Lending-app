@@ -13,7 +13,7 @@ export default function TopBar({ setLoans }) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const isLoggedIn = !!token;
 
-  // Close dropdown when clicking outside
+ 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -24,7 +24,7 @@ export default function TopBar({ setLoans }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ESLint fix — added user?.id to dependency array
+  
   useEffect(() => {
     if (!token || !setLoans || !user) return;
 
@@ -36,7 +36,7 @@ export default function TopBar({ setLoans }) {
         if (Array.isArray(data)) setLoans(data);
       })
       .catch(err => console.error(err));
-  }, [token, setLoans, user?.id]); //  user?.id instead of full user object
+  }, [token, setLoans, user?.id]); 
 
   const handleSignOut = () => {
     localStorage.removeItem("token");

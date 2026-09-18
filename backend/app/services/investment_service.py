@@ -5,7 +5,7 @@ from sqlalchemy import func
 
 def invest(data):
     # Validate required fields
-    required_fields = ["investor_id", "loan_id", "amount"]
+    required_fields = ["investor_id", "loan_id", "amount_invested"]
     for field in required_fields:
         if field not in data:
             raise ValueError(f"Missing required field: {field}")
@@ -16,14 +16,14 @@ def invest(data):
         raise ValueError("Loan not found")
 
     # Check amount
-    if data["amount"] <= 0:
+    if data["amount_invested"] <= 0:
         raise ValueError("Investment amount must be greater than 0")
 
     # Create investment
     investment = Investment(
         investor_id=data["investor_id"],
         loan_id=data["loan_id"],
-        amount_invested=data["amount"]
+        amount_invested=data["amount_invested"]
     )
     db.session.add(investment)
 

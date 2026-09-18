@@ -16,26 +16,32 @@ const LoanDetails = () => {
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
+  // Fetch loan details
+  const fetchLoan = async () => {
+    try {
+      const res = await fetch(`${API}/api/loans/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
+
+      if (!res.ok) throw new Error(`Failed to fetch loan: ${res.status}`);
+      const data = await res.json();
+      setLoan(data);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Unable to load loan details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetch(`${API}/api/loans/${id}`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch loan");
-        return res.json();
-      })
-      .then((data) => setLoan(data))
-      .catch((err) => {
-        console.error(err);
-        setError("Unable to load loan details");
-      })
-      .finally(() => setLoading(false));
+    fetchLoan();
   }, [id]);
 
-  const handleInvest = () => {
+  const handleInvest = async () => {
     if (!token) {
       alert("Please log in to invest");
       return;
@@ -44,40 +50,46 @@ const LoanDetails = () => {
       alert("Please enter a valid amount");
       return;
     }
+    if (Number(amount) > remaining) {
+      alert("Investment amount cannot exceed remaining amount");
+      return;
+    }
 
     setInvesting(true);
-    fetch(`${API}/api/investments/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        loan_id: loan.id,
-        investor_id: user?.id,
-        amount_invested: Number(amount),
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.investment_id) {
-          alert(`Successfully invested KES ${Number(amount).toLocaleString()}`);
-          setAmount("");
-          // Refresh loan data to update progress
-          return fetch(`${API}/api/loans/${id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-            .then((res) => res.json())
-            .then((updated) => setLoan(updated));
-        } else {
-          alert(data.error || "Investment failed");
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        alert("Investment failed");
-      })
-      .finally(() => setInvesting(false));
+
+    try {
+      const res = await fetch(`${API}/api/investments/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          loan_id: loan.id,
+          investor_id: user?.id,
+          amount_invested: Number(amount),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.investment_id) {
+        alert(`Successfully invested KES ${Number(amount).toLocaleString()}`);
+        setAmount("");
+        // Refresh loan data
+        await fetchLoan();
+      } else {
+        // Show the actual error message from backend
+        const errorMsg = data.error || data.message || "Investment failed";
+        alert(errorMsg);
+        console.error("Investment error:", data); 
+      }
+    } catch (err) {
+      console.error("Network or parsing error:", err);
+      alert("Investment failed. Please check your connection and try again.");
+    } finally {
+      setInvesting(false);
+    }
   };
 
   if (loading) return <><TopBar /><p style={{ padding: "20px" }}>Loading loan details...</p><Footer /></>;
@@ -94,7 +106,6 @@ const LoanDetails = () => {
       <TopBar />
 
       <div className="loan-details-container">
-
         {/* LOAN INFO */}
         <div className="card loan-info">
           <h2>Loan Info</h2>
@@ -102,14 +113,12 @@ const LoanDetails = () => {
             <div>
               <p className="label">Principal</p>
               <h3>KES {(loan.amount || 0).toLocaleString()}</h3>
-
               <p className="label">Interest Rate</p>
               <h3>{loan.rate || 0}%</h3>
             </div>
             <div>
               <p className="label">Term</p>
               <h3>{loan.term || "N/A"} months</h3>
-
               <p className="label">Risk Level</p>
               <h3>{loan.risk || "N/A"}</h3>
             </div>
@@ -136,14 +145,12 @@ const LoanDetails = () => {
             <div>
               <p className="label">Name</p>
               <h3>{loan.name || "N/A"}</h3>
-
               <p className="label">Purpose</p>
               <h3>{loan.purpose || "N/A"}</h3>
             </div>
             <div>
-              <p className="label">Rating</p>
+              <p className="label">Credit History Rating</p>
               <h3>⭐ {loan.rating || "N/A"}</h3>
-
               <p className="label">Total Invested In</p>
               <h3>KES {(loan.total_invested || 0).toLocaleString()}</h3>
             </div>
@@ -181,7 +188,7 @@ const LoanDetails = () => {
                            loan.status === "open" ? "orange" : "gray",
                     fontWeight: "bold"
                   }}>
-                    {loan.status?.toUpperCase()}
+                    {loan.status?.toUpperCase() || "UNKNOWN"}
                   </p>
 
                   <label>Amount Still Needed</label>
@@ -192,7 +199,7 @@ const LoanDetails = () => {
               <button
                 className="primary-btn"
                 onClick={handleInvest}
-                disabled={investing || loan.status === "funded"}
+                disabled={investing || loan.status === "funded" || remaining <= 0}
               >
                 {investing ? "Processing..." : loan.status === "funded" ? "Fully Funded" : "Invest Now"}
               </button>

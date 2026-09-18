@@ -10,8 +10,8 @@ repayment_bp = Blueprint("repayments", __name__)
 @repayment_bp.route("/", methods=["POST"])
 def create_repayment():
     data = request.get_json()
-    if not data or "loan_id" not in data or "amount" not in data:
-        return jsonify({"error": "loan_id and amount are required"}), 400
+    if not data or "loan_id" not in data or "amount_paid" not in data:
+        return jsonify({"error": "loan_id and amount_paid are required"}), 400
 
     try:
         repayment = record_repayment(data)

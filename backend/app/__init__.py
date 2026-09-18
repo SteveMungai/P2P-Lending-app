@@ -8,6 +8,7 @@ from app.routes.investment_routes import investment_bp
 from app.routes.repayment_routes import repayment_bp
 from app.routes.auth_routes import auth_bp
 
+
 def create_app():
     app = Flask(__name__)
 
@@ -33,5 +34,7 @@ def create_app():
     app.register_blueprint(investment_bp, url_prefix="/api/investments")
     app.register_blueprint(repayment_bp, url_prefix="/api/repayments")
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
+ 
+   
 
     return app

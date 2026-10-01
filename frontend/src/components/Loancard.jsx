@@ -7,25 +7,47 @@ export default function LoanCard({ loan }) {
 
   return (
     <div className="loan-card">
-      {/* Safe image fallback */}
+
+      {/* Loan image */}
       <img
         src={loan.image || "/default-loan.jpg"}
         alt={loan.name || "Loan"}
       />
 
+      {/* Loan name */}
       <h4>{loan.name || "Unnamed Loan"}</h4>
 
-      <p>Purpose: {loan.purpose || "Personal Loan"}</p>
-      <p>Term: {loan.term || 0} months</p>
+      {/* Loan information */}
+      <div className="loan-info">
 
-      {/* Format money */}
-      <p>
-        Amount: KES{" "}
-        {(loan.amount || 0).toLocaleString()}
-      </p>
+        <div className="info-item">
+          <span className="label">Purpose</span>
+          <span>{loan.purpose || "Personal Loan"}</span>
+        </div>
 
-      <p>Risk: {loan.risk || "N/A"}</p>
-      <p>Interest: {loan.rate || 0}%</p>
+        <div className="info-item">
+          <span className="label">Term</span>
+          <span>{loan.term || 0} months</span>
+        </div>
+
+        <div className="info-item">
+          <span className="label">Amount</span>
+          <span>
+            KES {(loan.amount || 0).toLocaleString()}
+          </span>
+        </div>
+
+        <div className="info-item">
+          <span className="label">Risk</span>
+          <span>{loan.risk || "N/A"}</span>
+        </div>
+
+        <div className="info-item">
+          <span className="label">Interest</span>
+          <span>{loan.rate || 0}%</span>
+        </div>
+
+      </div>
 
       {/* Navigate to loan details */}
       <button
@@ -34,6 +56,8 @@ export default function LoanCard({ loan }) {
       >
         Invest
       </button>
+
     </div>
   );
 }
+

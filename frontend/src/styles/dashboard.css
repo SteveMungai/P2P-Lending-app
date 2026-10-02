@@ -123,11 +123,6 @@ body {
   color: white;
 }
 
-.footer {
-  background: #eaeaea;
-  padding: 15px 40px;
-  font-size: 14px;
-}
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }

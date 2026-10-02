@@ -56,7 +56,7 @@ def seed_users():
         {
             "full_name": "Charlie Brown",
             "email": "charlie@example.com",
-            "image_file": "luis-villasmil-hh3ViD0r0Rc-unsplash.jpg",
+            "image_file": "ghani-mengal-kWMHNKMU_vk-unsplash.jpg",
             "rating": 3.8
         },
         {
@@ -68,7 +68,7 @@ def seed_users():
         {
             "full_name": "Ethan Hunt",
             "email": "ethan@example.com",
-            "image_file": "male2.jpg",
+            "image_file": "male1.jpg",
             "rating": 4.2
         },
     ]

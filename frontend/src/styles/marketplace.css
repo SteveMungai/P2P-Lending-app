@@ -126,7 +126,10 @@
 
   border-radius: 16px;
 
-  padding: 16px;
+  padding: 0;
+
+  /* Clips the image to the rounded corners */
+  overflow: hidden;
 
   min-width: 0;
   min-height: 360px;
@@ -147,17 +150,34 @@
 }
 
 
-/*  LOAN IMAGE */
+/*  LOAN IMAGE (top third of the card) */
 
-.loan-card img {
+.loan-image {
+  height: 200px;
+  flex-shrink: 0;
+}
+
+.loan-image img {
+  display: block;
+
   width: 100%;
-  height: 140px;
+  height: 100%;
 
+  /* Fills the area and crops instead of stretching */
   object-fit: cover;
+  object-position: center top;
+}
 
-  border-radius: 10px;
 
-  margin-bottom: 12px;
+/*  LOAN BODY  */
+
+.loan-body {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 16px;
 }
 
 
@@ -498,7 +518,7 @@
     min-height: auto;
   }
 
-  .loan-card img {
+  .loan-image {
     height: 180px;
   }
 
@@ -542,13 +562,15 @@
   }
 
   .loan-card {
-    padding: 14px;
-
     border-radius: 14px;
   }
 
-  .loan-card img {
+  .loan-image {
     height: 160px;
+  }
+
+  .loan-body {
+    padding: 14px;
   }
 
   .loan-info {

@@ -118,7 +118,8 @@ python seed.py
 Start the Flask server:
 
 flask run
-Frontend Setup
+
+### Frontend Setup
 
 Navigate to the frontend:
 
@@ -149,7 +150,7 @@ Example endpoint categories include:
 
 Authenticated endpoints use JWT tokens to ensure that user-specific information is only returned to the appropriate account.
 
-Financial Data Flow
+## Financial Data Flow
 
 A typical investment workflow is:
 

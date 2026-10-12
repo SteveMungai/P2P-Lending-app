@@ -200,3 +200,55 @@
 .login-btn:hover {
   background: #012e24;
 }
+
+/* ── RESPONSIVE: tablets & phones ─────────────────────────────
+   Without these the top bar is ~900px wide, which forces phones to
+   zoom the whole page out. */
+@media (max-width: 900px) {
+  .topbar {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .topbar-left {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+  }
+
+  .nav-links {
+    margin-left: 0;
+    gap: 16px;
+  }
+
+  .topbar-right {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+  }
+
+  .search-btn {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .user-name,
+  .chevron {
+    display: none;   /* keep just the avatar on phones */
+  }
+
+  .user-btn {
+    padding: 4px;
+  }
+
+  .dropdown {
+    min-width: 190px;
+  }
+}

@@ -9,6 +9,14 @@ def create_loan(data):
             raise ValueError(f"Missing required field: {field}")
 
     # Validate numeric values
+    for field in ["amount_requested", "interest_rate", "duration_months"]:
+        if isinstance(data[field], bool) or not isinstance(data[field], (int, float)):
+            raise ValueError(f"{field} must be a number")
+
+    purpose = (data.get("purpose") or "").strip()
+    if len(purpose) > 200:
+        raise ValueError("Purpose must be 200 characters or fewer")
+
     if data["amount_requested"] <= 0:
         raise ValueError("Amount must be greater than 0")
     if not (0 < data["interest_rate"] <= 100):
@@ -22,7 +30,8 @@ def create_loan(data):
         amount_requested=data["amount_requested"],
         amount_funded=data["amount_funded"],
         interest_rate=data["interest_rate"],
-        duration_months=data["duration_months"]
+        duration_months=int(data["duration_months"]),
+        purpose=purpose or None
     )
 
     try:

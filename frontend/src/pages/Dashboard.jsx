@@ -25,9 +25,9 @@ export default function Dashboard() {
 
 
     Promise.all([
-      fetch(`${API}/loans`, { headers }).then(res => res.json()),
-      fetch(`${API}/repayments`, { headers }).then(res => res.json()),
-      fetch(`${API}/users`, { headers }).then(res => res.json())
+      fetch(`${API}/api/loans`, { headers }).then(res => res.json()),
+      fetch(`${API}/api/repayments`, { headers }).then(res => res.json()),
+      fetch(`${API}/api/users`, { headers }).then(res => res.json())
     ])
       .then(([loansData, repaymentsData, usersData]) => {
         setLoans(Array.isArray(loansData) ? loansData : []);

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
+import { API_URL } from "../config";
 import "../styles/auth.css";
-
-const API = "http://localhost:5000" ;
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -30,7 +29,7 @@ export default function Auth() {
     try {
       const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
 
-      const res = await fetch(`${API}${endpoint}`, {
+      const res = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

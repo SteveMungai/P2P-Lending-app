@@ -1,0 +1,30 @@
+.notfound {
+  min-height: 55vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.notfound h1 {
+  margin: 0;
+  font-size: 72px;
+  color: #0f5f63;
+}
+
+.notfound p {
+  margin: 0 0 12px;
+  color: #475569;
+}
+
+.notfound-link {
+  padding: 11px 22px;
+  border-radius: 12px;
+  background: #0f5f63;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}

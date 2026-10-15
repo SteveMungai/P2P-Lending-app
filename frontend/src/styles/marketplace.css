@@ -426,6 +426,7 @@
   justify-content: center;
   padding: 16px;
   background: rgba(15, 23, 42, 0.55);
+  -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
 }
 
@@ -803,4 +804,30 @@
     transition: none;
     animation: none;
   }
+}
+
+/* ── Search results chip ───────────────────────────────────────── */
+.search-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 6px 8px 6px 14px;
+  border-radius: 999px;
+  background: #e0f2f1;
+  color: #0f5f63;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.search-chip button {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: #0f5f63;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
 }

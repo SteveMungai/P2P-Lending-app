@@ -1,52 +1,41 @@
-from flask import Blueprint, request, jsonify
-from app.services.repayment_service import record_repayment
+from flask import Blueprint, jsonify
+from flask_jwt_extended import get_jwt_identity, jwt_required
+
+from app.models.loan import Loan
 from app.models.repayments import Repayment
-from app.models.loan import Loan  
-from app.extensions import db
+from app.services.repayment_service import record_repayment
+from app.utils import json_body
 
 repayment_bp = Blueprint("repayments", __name__)
 
-#  Record repayment
+
+# Record a repayment (borrower only)
 @repayment_bp.route("/", methods=["POST"])
+@jwt_required()
 def create_repayment():
-    data = request.get_json()
-    if not data or "loan_id" not in data or "amount_paid" not in data:
-        return jsonify({"error": "loan_id and amount_paid are required"}), 400
-
-    try:
-        repayment = record_repayment(data)
-        return jsonify({
-            "message": "Repayment recorded",
-            "repayment_id": repayment.id
-        }), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+    repayment = record_repayment(int(get_jwt_identity()), json_body())
+    return jsonify({
+        "message": "Repayment recorded",
+        "repayment_id": repayment.id,
+    }), 201
 
 
-# Get all repayments
+# Repayments made on the logged-in user's own loans
 @repayment_bp.route("/", methods=["GET"])
-def get_repayments():
-    repayments = Repayment.query.all()
+@jwt_required()
+def get_my_repayments():
+    repayments = (
+        Repayment.query.join(Loan, Repayment.loan_id == Loan.id)
+        .filter(Loan.borrower_id == int(get_jwt_identity()))
+        .order_by(Repayment.payment_date.desc(), Repayment.id.desc())
+        .all()
+    )
     return jsonify([
         {
             "id": r.id,
             "loan_id": r.loan_id,
             "amount": float(r.amount_paid),
-            "date": r.payment_date
+            "date": r.payment_date.isoformat(),
         }
         for r in repayments
-    ]), 200
-
-
-# Get loans for a specific user
-@repayment_bp.route("/user/<int:user_id>", methods=["GET"])
-def get_user_loans(user_id):
-    loans = Loan.query.filter_by(borrower_id=user_id).all()
-    return jsonify([
-        {
-            "id": l.id,
-            "amount": float(l.amount_requested),
-            "status": l.status
-        } for l in loans
     ]), 200

@@ -1,19 +1,31 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { clearSession, getStoredUser, getToken } from "../utils/api";
 import "../styles/navbar.css";
 
-export default function TopBar({ setLoans }) {
+/**
+ * Props
+ *  - onSearch(query)  optional. The Marketplace passes it so the search runs
+ *                     in place. On every other page the search sends you to
+ *                     /marketplace?q=...
+ *
+ */
+export default function TopBar({ onSearch }) {
   const [showDropdown, setShowDropdown] = useState(false);
-  const [search, setSearch] = useState("");
+  const [params] = useSearchParams();
+  const [search, setSearch] = useState(params.get("q") || "");
   const dropdownRef = useRef(null);
-  const API = "http://127.0.0.1:5000";
   const navigate = useNavigate();
 
-  const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const token = getToken();
+  const user = getStoredUser();
   const isLoggedIn = !!token;
 
- 
+  // keep the box in sync when the URL changes (e.g. "clear search")
+  useEffect(() => {
+    setSearch(params.get("q") || "");
+  }, [params]);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -24,35 +36,19 @@ export default function TopBar({ setLoans }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  
-  useEffect(() => {
-    if (!token || !setLoans || !user) return;
-
-    fetch(`${API}/api/loans/user/${user.id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) setLoans(data);
-      })
-      .catch(err => console.error(err));
-  }, [token, setLoans, user?.id]); 
-
   const handleSignOut = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    clearSession();
     setShowDropdown(false);
     navigate("/auth");
   };
 
   const handleSearch = () => {
-    if (!setLoans) return;
-    fetch(`${API}/api/loans/search?q=${search}`)
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) setLoans(data);
-      })
-      .catch(err => console.error(err));
+    const q = search.trim();
+    if (onSearch) {
+      onSearch(q);
+    } else {
+      navigate(q ? `/marketplace?q=${encodeURIComponent(q)}` : "/marketplace");
+    }
   };
 
   return (
@@ -61,9 +57,9 @@ export default function TopBar({ setLoans }) {
         <span className="logo">LendConnect</span>
 
         <nav className="nav-links">
-          <a href="/">Home</a>
-          <a href="/marketplace">Marketplace</a>
-          <a href="/dashboard">Dashboard</a>
+          <Link to="/">Home</Link>
+          <Link to="/marketplace">Marketplace</Link>
+          <Link to="/dashboard">Dashboard</Link>
         </nav>
       </div>
 
@@ -107,7 +103,6 @@ export default function TopBar({ setLoans }) {
               </div>
             )}
           </div>
-
         ) : (
           <button className="login-btn" onClick={() => navigate("/auth")}>
             Login

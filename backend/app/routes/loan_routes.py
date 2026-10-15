@@ -1,158 +1,172 @@
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.services.loan_service import create_loan
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import get_jwt_identity, jwt_required
+from sqlalchemy import or_
+from sqlalchemy.orm import contains_eager
+
+from app.errors import ApiError
+from app.extensions import db
 from app.models.loan import Loan
 from app.models.user import User
+from app.services.loan_service import create_loan
+from app.utils import (
+    LOAN_STATUSES,
+    RISK_LEVELS,
+    absolute_image_url,
+    json_body,
+    risk_from_rate,
+)
 
 loan_bp = Blueprint("loan", __name__)
 
 
+# ── helpers ─────────────────────────────────────────────────────────────
+def serialize_loan(loan):
+    """The shape the marketplace cards (and the dashboard) use."""
+    borrower = loan.borrower
+    total = float(loan.amount_requested)
+    funded = float(loan.amount_funded or 0)
+    return {
+        "id": loan.id,
+        "borrower_id": loan.borrower_id,
+        "name": borrower.full_name if borrower else "Unknown",
+        "image": absolute_image_url(borrower.image_url) if borrower else None,
+        "amount": total,
+        "funded": funded,
+        "progress": min(int(funded / total * 100), 100) if total else 0,
+        "rate": loan.interest_rate,
+        "term": loan.duration_months,
+        "risk": risk_from_rate(loan.interest_rate),
+        "purpose": loan.purpose or "Personal Loan",
+        "status": loan.status,
+        "created_at": loan.created_at.isoformat() if loan.created_at else None,
+    }
+
+
+def _number_arg(name):
+    raw = request.args.get(name)
+    if raw in (None, ""):
+        return None
+    try:
+        value = float(raw)
+    except ValueError:
+        raise ApiError(f"{name} must be a number")
+    if value != value or value in (float("inf"), float("-inf")) or value < 0:
+        raise ApiError(f"{name} must be a positive number")
+    return value
+
+
+def build_loan_query():
+    """Shared by GET /, /filter and /search.
+
+    Query string (all optional):
+      q          text to look for in the purpose or borrower name
+      minAmount  / maxAmount   loan size in KES
+      risk       Low | Medium | High   (worked out from the interest rate)
+      status     open | funded | closed
+    """
+    query = Loan.query.join(User, Loan.borrower_id == User.id).options(
+        contains_eager(Loan.borrower)
+    )
+
+    q = (request.args.get("q") or "").strip()
+    if q:
+        escaped = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        like = f"%{escaped}%"
+        query = query.filter(
+            or_(Loan.purpose.ilike(like, escape="\\"), User.full_name.ilike(like, escape="\\"))
+        )
+
+    min_amount = _number_arg("minAmount")
+    max_amount = _number_arg("maxAmount")
+    if min_amount is not None:
+        query = query.filter(Loan.amount_requested >= min_amount)
+    if max_amount is not None:
+        query = query.filter(Loan.amount_requested <= max_amount)
+
+    risk = (request.args.get("risk") or "").strip().capitalize()
+    if risk:
+        if risk not in RISK_LEVELS:
+            raise ApiError("risk must be Low, Medium or High")
+        if risk == "Low":
+            query = query.filter(Loan.interest_rate <= 10)
+        elif risk == "Medium":
+            query = query.filter(Loan.interest_rate > 10, Loan.interest_rate <= 18)
+        else:
+            query = query.filter(Loan.interest_rate > 18)
+
+    status = (request.args.get("status") or "").strip().lower()
+    if status:
+        if status not in LOAN_STATUSES:
+            raise ApiError("status must be open, funded or closed")
+        query = query.filter(Loan.status == status)
+
+    return query.order_by(Loan.created_at.desc(), Loan.id.desc())
+
+
+#routes 
 # Create a loan (the logged-in user becomes the borrower)
 @loan_bp.route("/", methods=["POST"])
 @jwt_required()
 def create():
-    data = request.get_json(silent=True)
-    if not data:
-        return jsonify({"error": "No data provided"}), 400
-
-  
-    data["borrower_id"] = int(get_jwt_identity())
-    data["amount_funded"] = 0
-
-    try:
-        loan = create_loan(data)
-    except (ValueError, TypeError) as e:
-        return jsonify({"error": str(e)}), 400
-
+    loan = create_loan(int(get_jwt_identity()), json_body())
     return jsonify({"message": "Loan created", "loan_id": loan.id}), 201
 
 
-# Get single loan by ID
-@loan_bp.route("/<int:loan_id>", methods=["GET"])
-def get_one(loan_id):
-    loan = Loan.query.get(loan_id)
-    if not loan:
-        return jsonify({"error": "Loan not found"}), 404
-
-    user = User.query.get(loan.borrower_id)
-    funded = float(getattr(loan, "amount_funded", 0) or 0)
-    total = float(loan.amount_requested)
-    progress = int((funded / total) * 100) if total else 0
-
-    def get_risk(rate):
-        if rate <= 10:
-            return "Low"
-        elif rate <= 18:
-            return "Medium"
-        else:
-            return "High"
-
-    return jsonify({
-        "id": loan.id,
-        "name": user.full_name if user else "Unknown",
-        "image": getattr(user, "image_url", None) if user else None,
-        "email": user.email if user else None,
-        "rating": float(user.rating) if user and user.rating else 0,
-        "total_invested": float(user.total_invested) if user and user.total_invested else 0,
-        "amount": total,
-        "funded": funded,
-        "progress": progress,
-        "rate": loan.interest_rate,
-        "term": loan.duration_months,
-        "risk": get_risk(loan.interest_rate),
-        "purpose": getattr(loan, "purpose", "Personal Loan"),
-        "status": loan.status,
-        "created_at": loan.created_at.isoformat() if loan.created_at else None
-    }), 200
-
-
-# Get loans with optional filters
-@loan_bp.route("/filter", methods=["GET"])
-def get_loans():
-    min_amount = request.args.get("minAmount", type=int)
-    max_amount = request.args.get("maxAmount", type=int)
-    risk = request.args.get("risk")
-
-    query = Loan.query
-    if min_amount:
-        query = query.filter(Loan.amount_requested >= min_amount)
-    if max_amount:
-        query = query.filter(Loan.amount_requested <= max_amount)
-    if risk:
-        query = query.filter(Loan.risk == risk)
-
-    loans = query.all()
-    return jsonify([loan.to_dict() if hasattr(loan, "to_dict") else {
-        "id": loan.id,
-        "amount": float(getattr(loan, "amount_requested", 0)),
-        "status": getattr(loan, "status", "pending")
-    } for loan in loans]), 200
-
-
-# Get all loans with user info and progress
+# List loans. Accepts every filter above, e.g. /api/loans/?status=open&risk=Low
 @loan_bp.route("/", methods=["GET"])
 def get_all():
-    loans = Loan.query.all()
-
-    def get_risk(rate):
-        if rate <= 10:
-            return "Low"
-        elif rate <= 18:
-            return "Medium"
-        else:
-            return "High"
-
-    result = []
-    for loan in loans:
-        user = User.query.get(loan.borrower_id)
-        funded = getattr(loan, "amount_funded", 0) or 0
-        total = loan.amount_requested
-        progress = int((funded / total) * 100) if total else 0
-
-        result.append({
-            "id": loan.id,
-            "name": user.full_name if user else "Unknown",
-            "image": getattr(user, "image_url", None) if user else None,
-            "amount": float(total),      # Decimal -> number 
-            "funded": float(funded),
-            "progress": progress,
-            "rate": loan.interest_rate,
-            "term": loan.duration_months,
-            "risk": get_risk(loan.interest_rate),
-            "purpose": getattr(loan, "purpose", "Personal Loan")
-        })
-
-    return jsonify(result), 200
+    return jsonify([serialize_loan(l) for l in build_loan_query().all()]), 200
 
 
-# Get loans for a specific user
-@loan_bp.route("/user/<int:user_id>", methods=["GET"])
-def get_user_loans(user_id):
-    loans = Loan.query.filter_by(borrower_id=user_id).all()
-    return jsonify([
-        {
-            "id": l.id,
-            "amount": float(l.amount_requested),
-            "status": l.status
-        } for l in loans
-    ]), 200
+# Kept for backwards compatibility: same as GET /api/loans/ with filters.
+
+@loan_bp.route("/filter", methods=["GET"])
+def filter_loans():
+    return get_all()
 
 
-# Search loans by purpose
+# Kept for backwards compatibility: same as GET /api/loans/?q=...
+# It now returns the same card shape as the list .
 @loan_bp.route("/search", methods=["GET"])
 def search_loans():
-    query = request.args.get("q", "")
-    if not query:
-        return jsonify([]), 200
+    return get_all()
 
-    loans = Loan.query.filter(Loan.purpose.ilike(f"%{query}%")).all()
-    return jsonify([
-        {
-            "id": l.id,
-            "amount": float(getattr(l, "amount_requested", 0)),
-            "status": getattr(l, "status", "pending"),
-            "purpose": getattr(l, "purpose", "Personal Loan"),
-            "rate": getattr(l, "interest_rate", 0),
-            "term": getattr(l, "duration_months", 0)
-        } for l in loans
-    ]), 200
+
+# Loans the logged-in user has requested (used by the dashboard)
+@loan_bp.route("/mine", methods=["GET"])
+@jwt_required()
+def get_my_loans():
+    loans = (
+        Loan.query.join(User, Loan.borrower_id == User.id)
+        .options(contains_eager(Loan.borrower))
+        .filter(Loan.borrower_id == int(get_jwt_identity()))
+        .order_by(Loan.created_at.desc(), Loan.id.desc())
+        .all()
+    )
+    return jsonify([serialize_loan(l) for l in loans]), 200
+
+
+# A user may only list their own loans
+@loan_bp.route("/user/<int:user_id>", methods=["GET"])
+@jwt_required()
+def get_user_loans(user_id):
+    if user_id != int(get_jwt_identity()):
+        raise ApiError("You can only view your own loans", 403)
+    return get_my_loans()
+
+
+# Single loan with borrower details
+@loan_bp.route("/<int:loan_id>", methods=["GET"])
+def get_one(loan_id):
+    loan = db.session.get(Loan, loan_id)
+    if not loan:
+        raise ApiError("Loan not found", 404)
+
+    data = serialize_loan(loan)
+    borrower = loan.borrower
+    data.update({
+        
+        "rating": float(borrower.rating) if borrower and borrower.rating else 0,
+        "total_invested": float(borrower.total_invested) if borrower and borrower.total_invested else 0,
+    })
+    return jsonify(data), 200

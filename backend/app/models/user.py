@@ -19,6 +19,7 @@ class User(db.Model):
     password = db.Column(db.String(200), nullable=False)
 
     # Store the actual image in PostgreSQL
+    image_url = db.Column(db.String(200), nullable=True)
     image_data = db.Column(db.LargeBinary, nullable=True)
     image_mimetype = db.Column(db.String(50), nullable=True)
 

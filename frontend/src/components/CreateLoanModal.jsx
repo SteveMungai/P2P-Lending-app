@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { FiX } from "react-icons/fi";
+import { API_URL as API } from "../config";
 
-const API = "http://127.0.0.1:5000";
 
 // Same thresholds the backend uses to label risk (loan_routes.get_risk)
 const riskFromRate = (rate) => {

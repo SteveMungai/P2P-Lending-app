@@ -1,54 +1,81 @@
-from flask import Blueprint, request, jsonify
-from app.extensions import db, bcrypt
-from app.models.user import User
+import re
+
+from flask import Blueprint, jsonify
 from flask_jwt_extended import create_access_token
+from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
+
+from app.errors import ApiError
+from app.extensions import bcrypt, db
+from app.models.user import User
+from app.utils import json_body
 
 auth_bp = Blueprint("auth", __name__)
+
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def _text(data, field, label):
+    value = data.get(field)
+    if not isinstance(value, str) or not value.strip():
+        raise ApiError(f"{label} is required")
+    return value.strip()
 
 
 # Register a new user
 @auth_bp.route("/register", methods=["POST"])
 def register():
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "No input data provided"}), 400
+    data = json_body()
 
-    if User.query.filter_by(email=data.get("email")).first():
-        return jsonify({"error": "Email already registered"}), 409
+    full_name = _text(data, "full_name", "Full name")
+    email = _text(data, "email", "Email").lower()
+    password = data.get("password")
 
-    hashed_password = bcrypt.generate_password_hash(data["password"]).decode("utf-8")
+    if len(full_name) > 120:
+        raise ApiError("Full name is too long")
+    if len(email) > 120 or not EMAIL_RE.match(email):
+        raise ApiError("Enter a valid email address")
+    if not isinstance(password, str) or len(password) < 8:
+        raise ApiError("Password must be at least 8 characters")
+    if len(password.encode("utf-8")) > 72:  # bcrypt's hard limit
+        raise ApiError("Password must be 72 bytes or fewer")
+
+    if User.query.filter(func.lower(User.email) == email).first():
+        raise ApiError("Email already registered", 409)
 
     user = User(
-        full_name=data.get("full_name"),
-        email=data.get("email"),
-        password=hashed_password
+        full_name=full_name,
+        email=email,
+        password=bcrypt.generate_password_hash(password).decode("utf-8"),
     )
+    try:
+        db.session.add(user)
+        db.session.commit()
+    except IntegrityError:  # someone registered the same email a moment ago
+        db.session.rollback()
+        raise ApiError("Email already registered", 409)
 
-    db.session.add(user)
-    db.session.commit()
-
-    return jsonify({
-        "message": "User created",
-        "user": user.to_dict()  # returns all random values
-    }), 201
+    return jsonify({"message": "User created", "user": user.to_dict()}), 201
 
 
 # Login user
 @auth_bp.route("/login", methods=["POST"])
 def login():
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "No input data provided"}), 400
+    data = json_body()
 
-    user = User.query.filter_by(email=data.get("email")).first()
+    email = data.get("email")
+    password = data.get("password")
+    if not isinstance(email, str) or not isinstance(password, str) or not email or not password:
+        raise ApiError("Email and password are required")
 
-    if not user or not bcrypt.check_password_hash(user.password, data.get("password")):
-        return jsonify({"error": "Invalid credentials"}), 401
+    user = User.query.filter(func.lower(User.email) == email.strip().lower()).first()
+    if not user or not bcrypt.check_password_hash(user.password, password):
+        raise ApiError("Invalid credentials", 401)
 
-    token = create_access_token(identity=str(user.id))  # cast to str to avoid JWT warning
+    token = create_access_token(identity=str(user.id))  # str avoids a JWT warning
 
     return jsonify({
         "message": "Login successful",
         "token": token,
-        "user": user.to_dict()  # returns all random values
+        "user": user.to_dict(),
     }), 200

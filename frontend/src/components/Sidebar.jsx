@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { API_URL as API } from "../config";
 import { FiPlusCircle, FiPlus, FiSliders, FiX } from "react-icons/fi";
 
-const API = "http://127.0.0.1:5000";
 
 const formatKES = (value) => {
   const n = Number(value || 0);

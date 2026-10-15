@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"; 
 import Navbar from "../components/Navbar";
 import "../styles/landing.css";
@@ -6,36 +5,6 @@ import "../styles/landing.css";
 
 export default function Landing() {
   const navigate = useNavigate();
-  const [loans, setLoans] = useState([]);
-  const API = "http://127.0.0.1:5000"; 
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (token) {
-      // Get User Data
-      fetch(`${API}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error("Unauthorized");
-          return res.json();
-        })
-        .then((user) => {
-          // Get User Loans using User ID
-          return fetch(`${API}/loans/user/${user.id}`);
-        })
-        .then((res) => res.json())
-        .then((data) => {
-          setLoans(data);
-          console.log("Loans loaded:", data);
-        })
-        .catch((err) => {
-          console.error("Session expired or fetch failed", err);
-          
-        });
-    }
-  }, []); 
 
   return (
     <>

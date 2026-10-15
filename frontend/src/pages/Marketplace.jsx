@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import "../styles/marketplace.css";
 import Sidebar from "../components/Sidebar";
 import CreateLoanModal from "../components/CreateLoanModal";
 import LoanCard from "../components/Loancard";
 import TopBar from "../components/TopBar";
 import Footer from "../components/Footer";
+import { apiFetch } from "../utils/api";
 
-const API = "http://127.0.0.1:5000";
 const NO_FILTERS = { minAmount: null, maxAmount: null, risk: "" };
 
 export default function Marketplace() {
@@ -24,27 +24,30 @@ export default function Marketplace() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
+  // Search comes from the top bar and lives in the URL (?q=...)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = (searchParams.get("q") || "").trim();
+
+  const handleSearch = (q) => setSearchParams(q ? { q } : {});
+
   const fetchLoans = useCallback(() => {
     setLoading(true);
     setError(null);
 
-    fetch(`${API}/api/loans/`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-    })
+    const qs = new URLSearchParams({ status: "open" });
+    if (query) qs.set("q", query);
+
+    apiFetch(`/api/loans/?${qs}`, { auth: false })
       .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch loans");
-        return res.json();
+        if (!res.ok) throw new Error(res.data?.error || "Failed to fetch loans");
+        setLoans(Array.isArray(res.data) ? res.data : []);
       })
-      .then((data) => setLoans(Array.isArray(data) ? data : []))
       .catch((err) => {
         console.error("Error fetching loans:", err);
         setError("Unable to load loans");
       })
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [query]);
 
   useEffect(() => {
     fetchLoans();
@@ -95,7 +98,7 @@ export default function Marketplace() {
 
   return (
     <div className="marketplace">
-      <TopBar />
+      <TopBar onSearch={handleSearch} />
 
       <div className="marketplace-body">
         <Sidebar
@@ -117,13 +120,28 @@ export default function Marketplace() {
             </button>
           </div>
 
+          {query && (
+            <p className="search-chip">
+              Results for “{query}”
+              <button
+                type="button"
+                onClick={() => handleSearch("")}
+                aria-label="Clear search"
+              >
+                ✕
+              </button>
+            </p>
+          )}
+
           <div className="loan-grid">
             {loading && <p>Loading loans...</p>}
             {error && <p className="error">{error}</p>}
 
             {!loading && !error && visibleLoans.length === 0 && (
               <p>
-                {filtersActive
+                {query
+                  ? `No loans match “${query}”.`
+                  : filtersActive
                   ? "No loans match your filters."
                   : "No loans found"}
               </p>

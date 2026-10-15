@@ -1,43 +1,47 @@
-from app.models.loan import Loan
+from app.errors import ApiError
 from app.extensions import db
+from app.models.loan import Loan
+from app.utils import parse_int, parse_money
 
-def create_loan(data):
-    # Validate required fields
-    required_fields = ["borrower_id", "amount_requested","amount_funded", "interest_rate", "duration_months"]
-    for field in required_fields:
+
+def create_loan(borrower_id, data):
+    """Create an open loan request for `borrower_id` (the logged-in user)."""
+    for field in ("amount_requested", "interest_rate", "duration_months"):
         if field not in data:
-            raise ValueError(f"Missing required field: {field}")
+            raise ApiError(f"Missing required field: {field}")
 
-    # Validate numeric values
-    for field in ["amount_requested", "interest_rate", "duration_months"]:
-        if isinstance(data[field], bool) or not isinstance(data[field], (int, float)):
-            raise ValueError(f"{field} must be a number")
+    amount = parse_money(data["amount_requested"], "amount_requested")
 
-    purpose = (data.get("purpose") or "").strip()
+    rate = data["interest_rate"]
+    if isinstance(rate, bool) or not isinstance(rate, (int, float)):
+        raise ApiError("interest_rate must be a number")
+    if not (0 < rate <= 100):
+        raise ApiError("Interest rate must be between 0 and 100")
+
+    months = parse_int(data["duration_months"], "duration_months")
+    if not (1 <= months <= 120):
+        raise ApiError("Duration must be between 1 and 120 months")
+
+    purpose = data.get("purpose")
+    if purpose is not None and not isinstance(purpose, str):
+        raise ApiError("Purpose must be text")
+    purpose = (purpose or "").strip()
     if len(purpose) > 200:
-        raise ValueError("Purpose must be 200 characters or fewer")
+        raise ApiError("Purpose must be 200 characters or fewer")
 
-    if data["amount_requested"] <= 0:
-        raise ValueError("Amount must be greater than 0")
-    if not (0 < data["interest_rate"] <= 100):
-        raise ValueError("Interest rate must be between 0 and 100")
-    if data["duration_months"] <= 0:
-        raise ValueError("Duration must be greater than 0 months")
-
-    # Create loan instance
     loan = Loan(
-        borrower_id=data["borrower_id"],
-        amount_requested=data["amount_requested"],
-        amount_funded=data["amount_funded"],
-        interest_rate=data["interest_rate"],
-        duration_months=int(data["duration_months"]),
-        purpose=purpose or None
+        borrower_id=borrower_id,
+        amount_requested=amount,
+        amount_funded=0,  # a new loan has nothing funded yet
+        interest_rate=float(rate),
+        duration_months=months,
+        purpose=purpose or None,
     )
 
     try:
         db.session.add(loan)
         db.session.commit()
-        return loan  # returns the created loan object
-    except Exception as e:
-        db.session.rollback()  # rollback on error
-        raise e
+        return loan
+    except Exception:
+        db.session.rollback()
+        raise

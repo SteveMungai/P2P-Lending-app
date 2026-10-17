@@ -252,3 +252,46 @@
     min-width: 190px;
   }
 }
+
+/* VISUAL REFRESH: light, minimal top bar shared by Marketplace / Dashboard / Loan pages */
+.topbar {
+  background: #fff;
+  border-bottom: 1px solid #e2ecec;
+  box-shadow: none;
+}
+
+.topbar .logo {
+  color: #0a2f31;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.nav-links a {
+  color: #334155;
+  font-size: 14px;
+}
+
+.nav-links a:hover {
+  color: #0f5f63;
+}
+
+.search-input {
+  border: 1px solid #dbe6e6;
+  border-radius: 12px;
+  background: #f6f9f9;
+}
+
+.search-input:focus {
+  border-color: #14b8a6;
+  background: #fff;
+}
+
+.search-btn {
+  border-radius: 12px;
+}
+
+.search-btn:hover {
+  background: #0a4a4e;
+}
+

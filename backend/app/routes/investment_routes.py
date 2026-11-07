@@ -3,7 +3,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.models.investments import Investment
 from app.services.investment_service import invest
-from app.utils import json_body
+from app.utils import json_body, risk_from_rate
 
 investment_bp = Blueprint("investments", __name__)
 
@@ -48,6 +48,8 @@ def get_my_investments():
             "amount": float(inv.amount_invested),
             "purpose": inv.loan.purpose if inv.loan else None,
             "loan_status": inv.loan.status if inv.loan else None,
+            "rate": inv.loan.interest_rate if inv.loan else None,
+            "risk": risk_from_rate(inv.loan.interest_rate) if inv.loan else None,
             "created_at": inv.created_at.isoformat(),
         }
         for inv in investments

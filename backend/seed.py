@@ -14,11 +14,11 @@ def seed_users():
     print("Seeding Users...")
 
     users_data = [
-        {"full_name": "Alice Johnson", "email": "alice@example.com", "image_url": "static/images/mario-la-pergola-8EPtzH-utU4-unsplash.jpg", "rating": 4.5},
-        {"full_name": "Bob Smith", "email": "bob@example.com", "image_url": "static/images/podmatch-GEnCnYhA1J4-unsplash.jpg", "rating": 4.0},
-        {"full_name": "Charlie Brown", "email": "charlie@example.com", "image_url": "static/images/ghani-mengal-kWMHNKMU_vk-unsplash.jpg", "rating": 3.8},
-        {"full_name": "Diana Prince", "email": "diana@example.com", "image_url": "static/images/vince-veras-AJIqZDAUD7A-unsplash.jpg", "rating": 4.9},
-        {"full_name": "Ethan Hunt", "email": "ethan@example.com", "image_url": "static/images/male1.jpg", "rating": 4.2},
+        {"full_name": "Alice Johnson", "email": "alice@example.com", "image_url": "/images/borrower1.jpg", "rating": 4.5},
+        {"full_name": "Bob Smith", "email": "bob@example.com", "image_url": "/images/borrower2.jpg", "rating": 4.0},
+        {"full_name": "Charlie Brown", "email": "charlie@example.com", "image_url": "/images/borrower3.jpg", "rating": 3.8},
+        {"full_name": "Diana Prince", "email": "diana@example.com", "image_url": "/images/borrower4.jpg", "rating": 4.9},
+        {"full_name": "Ethan Hunt", "email": "ethan@example.com", "image_url": "/images/borrower5.jpg", "rating": 4.2},
     ]
 
     for u in users_data:

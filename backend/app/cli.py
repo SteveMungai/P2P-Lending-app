@@ -10,10 +10,8 @@ from app.models.loan import Loan
 
 @click.command("reconcile-funding")
 def reconcile_funding():
-    # Recompute loans.amount_funded from the investments table.
-
-
-
+    """Recompute loans.amount_funded from the investments table.
+    """
     totals = dict(
         db.session.query(Investment.loan_id, func.sum(Investment.amount_invested))
         .group_by(Investment.loan_id)

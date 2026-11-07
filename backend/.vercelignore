@@ -1,0 +1,11 @@
+# Keep the deployed function small: none of this is needed at runtime.
+venv/
+.venv/
+tests/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+*.log
+static/
+requirements-dev.txt

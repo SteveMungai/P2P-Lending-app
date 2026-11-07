@@ -90,6 +90,16 @@ export default function Marketplace() {
     setShowCreate(true);
   };
 
+  // Landing page / dashboard buttons link to /marketplace?new=1
+  useEffect(() => {
+    if (searchParams.get("new") !== "1") return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("new");
+    setSearchParams(next, { replace: true });
+    openCreateLoan();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleLoanCreated = () => {
     setShowCreate(false);
     setToast("Your loan request is live on the marketplace.");

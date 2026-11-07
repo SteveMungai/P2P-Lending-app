@@ -1,4 +1,6 @@
-from flask import Flask
+from flask import Flask, jsonify
+from sqlalchemy import text
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.cli import register_cli
 from app.config import Config
@@ -12,8 +14,9 @@ from app.routes.user_routes import user_bp
 
 
 def create_app(test_config=None):
-    # Images live in backend/static
-    app = Flask(__name__, static_folder="../static", static_url_path="/static")
+    # Images live in backend/public/images and are served at /images/... .
+    # (On Vercel the CDN serves everything in public/ itself; this makes the same URLs work locally.)
+    app = Flask(__name__, static_folder="../public", static_url_path="")
 
     # "/api/loans" and "/api/loans/" both work .
     app.url_map.strict_slashes = False
@@ -40,6 +43,9 @@ def create_app(test_config=None):
             'python -c "import secrets; print(secrets.token_urlsafe(48))"'
         )
 
+    if app.config.get("TRUST_PROXY"):
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
     db.init_app(app)
     migrate.init_app(app, db)
     bcrypt.init_app(app)
@@ -54,5 +60,16 @@ def create_app(test_config=None):
     app.register_blueprint(investment_bp, url_prefix="/api/investments")
     app.register_blueprint(repayment_bp, url_prefix="/api/repayments")
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
+
+    # Used for deployment smoke tests and uptime monitors
+    @app.get("/api/health")
+    def health():
+        try:
+            db.session.execute(text("SELECT 1"))
+            return jsonify({"status": "ok", "database": "ok"}), 200
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Health check: database unreachable")
+            return jsonify({"status": "degraded", "database": "unreachable"}), 503
 
     return app

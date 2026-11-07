@@ -1,4 +1,5 @@
 .notfound {
+  background: #f1f5f9;
   min-height: 55vh;
   display: flex;
   flex-direction: column;

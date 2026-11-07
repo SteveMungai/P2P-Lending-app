@@ -4,6 +4,8 @@ import Marketplace from "./pages/Marketplace";
 import LoanDetails from "./pages/LoanDetails";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/auth";
+import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -12,8 +14,16 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/loans/:id" element={<LoanDetails />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/auth" element={<Auth />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );
